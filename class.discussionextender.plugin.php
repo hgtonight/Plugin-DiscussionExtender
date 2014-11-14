@@ -2,14 +2,15 @@
 $PluginInfo['DiscussionExtender'] = array(
     'Name' => 'Discussion Extender',
     'Description' => 'Add arbitrary fields to discussions. Easy to customize via the admin dashboard.',
-    'Version' => '0.1',
+    'Version' => '1.0',
     'RequiredApplications' => array('Vanilla' => '2.1'),
     'MobileFriendly' => TRUE,
     'SettingsUrl' => '/dashboard/settings/discussionextender',
     'SettingsPermission' => 'Garden.Settings.Manage',
     'Author' => 'Zachary Doll',
     'AuthorEmail' => 'hgtonight@daklutz.com',
-    'AuthorUrl' => 'http://daklutz.com'
+    'AuthorUrl' => 'http://daklutz.com',
+    'License' => 'GPLv2'
 );
 
 class DiscussionExtender extends Gdn_Plugin {
@@ -38,12 +39,14 @@ class DiscussionExtender extends Gdn_Plugin {
    * @var type
    */
   public $FieldProperties = array(
+      'Name',
       'Type',
       'Position',
       'Label',
       'Options',
       'DisplayInDiscussion',
-      'Required'
+      'Required',
+      'MakeColumn'
   );
 
   /**
@@ -84,7 +87,7 @@ class DiscussionExtender extends Gdn_Plugin {
   }
 
   /**
-   * Edit a field.
+   * Add/Edit a field.
    */
   public function Controller_Edit($Sender) {
     $Sender->Permission('Garden.Settings.Manage');
@@ -92,6 +95,7 @@ class DiscussionExtender extends Gdn_Plugin {
 
     $Args = $Sender->RequestArgs;
     array_shift($Args);
+    $Name = val(0, $Args, FALSE);
 
     if ($Sender->Form->AuthenticatedPostBack()) {
       $FormPostValues = $Sender->Form->FormValues();
@@ -124,7 +128,7 @@ class DiscussionExtender extends Gdn_Plugin {
 
       // Merge updated data into config
       $Fields = $this->GetDiscussionFields();
-      if (!$Name = GetValue('Name', $FormPostValues)) {
+      if (!$Name || $Name != GetValue('Name', $FormPostValues)) {
         // Make unique name from label for new fields
         $Name = $TestSlug = preg_replace('`[^0-9a-zA-Z]`', '', GetValue('Label', $FormPostValues));
         $i = 1;
@@ -138,18 +142,18 @@ class DiscussionExtender extends Gdn_Plugin {
         $Data = C('DiscussionExtender.Fields.' . $Name, array());
         $Data = array_merge((array) $Data, (array) $FormPostValues);
         SaveToConfig('DiscussionExtender.Fields.' . $Name, $Data);
-        $this->Structure();
+        //$this->Structure();
         $Sender->RedirectUrl = Url('/settings/discussionextender');
       }
-    } elseif (isset($Args[0])) {
+    } elseif ($Name) {
       // Editing
-      $Data = $this->GetDiscussionField($Args[0]);
+      $Data = $this->GetDiscussionField($Name);
       if ($Data) {
         if (isset($Data['Options']) && is_array($Data['Options'])) {
           $Data['Options'] = implode("\n", $Data['Options']);
         }
         $Sender->Form->SetData($Data);
-        $Sender->Form->AddHidden('Name', $Args[0]);
+        $Sender->Form->AddHidden('Name', $Name);
         $Sender->SetData('Title', T('Edit Discussion Field'));
       }
     }
@@ -211,6 +215,12 @@ class DiscussionExtender extends Gdn_Plugin {
     }
   }
 
+  /**
+   * Takes a Gdn_Form object and a specific position and spits out the
+   * appropriate markup for the configured fields in that position
+   * @param Gdn_Form $Form
+   * @param string $Position
+   */
   private function RenderDiscussionFieldInputs($Form, $Position) {
     $Fields = $this->GetDiscussionFields();
     foreach ($Fields as $Name => $Field) {
@@ -249,10 +259,6 @@ class DiscussionExtender extends Gdn_Plugin {
     }
 
     echo WrapIf($FieldString, 'dl');
-  }
-
-  public function Setup() {
-    return true;
   }
 
   /**
