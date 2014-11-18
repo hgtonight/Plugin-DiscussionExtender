@@ -138,6 +138,7 @@ class DiscussionExtender extends Gdn_Plugin {
         while (array_key_exists($Name, $Fields) || in_array($Name, $this->ReservedNames)) {
           $Name = $TestSlug . $i++;
         }
+        $FormPostValues['Name'] = $Name;
       }
 
       // Save if no errors
@@ -252,7 +253,7 @@ class DiscussionExtender extends Gdn_Plugin {
   }
   
   private function AddExistingDiscussionFieldData($Form, $Discussion) {
-    $Fields = DiscussionModel::GetRecordAttribute($Discussion, 'ExtendedFields');
+    $Fields = DiscussionModel::GetRecordAttribute($Discussion, 'ExtendedFields', array());
     $AllowedFields = $this->GetDiscussionFields();
 
     foreach ($Fields as $Field => $Value) {
@@ -268,7 +269,7 @@ class DiscussionExtender extends Gdn_Plugin {
   public function DiscussionController_BeforeDiscussionBody_Handler($Sender) {
     $Discussion = $Sender->EventArguments['Discussion'];
     $Fields = $this->GetDiscussionFields();
-    $FieldAttributes = DiscussionModel::GetRecordAttribute($Discussion, 'ExtendedFields');
+    $FieldAttributes = DiscussionModel::GetRecordAttribute($Discussion, 'ExtendedFields', array());
     $FieldString = '';
     foreach ($Fields as $Name => $Field) {
       $ColumnValue = val($Name, $Discussion, FALSE);
