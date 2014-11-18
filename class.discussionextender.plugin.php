@@ -179,11 +179,13 @@ class DiscussionExtender extends Gdn_Plugin {
     if ($Field) {
       if ($Sender->Form->AuthenticatedPostBack()) {
         $FormPostValues = $Sender->Form->FormValues();
-
         if (!$FormPostValues['Confirm']) {
           $Sender->Form->AddError('You must confirm the removal.', 'Confirm');
         } else {
-          RemoveFromConfig('DiscussionExtender.Fields.' . $Args[0]);
+          if($FormPostValues['Wipe']) {
+            $this->RemoveFieldDataFromDB($Field);
+          }
+          RemoveFromConfig('DiscussionExtender.Fields.' . $Field['Name']);
           $Sender->RedirectUrl = Url('/settings/discussionextender');
         }
       }
@@ -358,6 +360,42 @@ class DiscussionExtender extends Gdn_Plugin {
     $Structure->Set();
   }
 
+  private function RemoveFieldDataFromDB($Field) {
+    $Database = Gdn::Database();
+    $Px = $Database->DatabasePrefix;
+    if($Field['Column']) {
+      // Remove column from Discussion table
+      $Table = $Database->QuoteExpression($Field['Name']);
+      $Sql = "alter table {$Px}Discussion drop `{$Table}`";
+      return $Database->Query($Sql)->Result();
+    }
+    else {
+      // Remove data from Discussion Attributes
+      $Sql = "select DiscussionID, Attributes from {$Px}Discussion where Attributes is not NULL";
+      $Discussions = $Database->Query($Sql)->Result();
+      $DiscussionModel = new DiscussionModel();
+      foreach($Discussions as $Discussion) {
+        $Attributes = unserialize($Discussion->Attributes);
+        $Updated = FALSE;
+        if(array_key_exists('ExtendedFields', $Attributes) && array_key_exists($Field['Name'], $Attributes['ExtendedFields'])) {
+          // Remove the discussion field from the attributes
+          unset($Attributes['ExtendedFields'][$Field['Name']]);
+          $Updated = TRUE;
+        }
+        
+        if($Updated) {
+          if(count($Attributes['ExtendedFields']) == 0) {
+            // Remove the storage array if it is empty
+            unset($Attributes['ExtendedFields']);
+          }
+          
+          // Save the new attributes to the db
+          $DiscussionModel->SetField($Discussion->DiscussionID, 'Attributes', serialize($Attributes));
+        }
+      }
+    }
+  }
+  
   /**
    * Get list of custom discussion fields.
    *
