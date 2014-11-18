@@ -334,13 +334,13 @@ class DiscussionExtender extends Gdn_Plugin {
 
     $Structure = Gdn::Structure();
     $Structure->Table('Discussion');
-
+    $ColumnCount = 0;
     foreach ($Fields as $Name => $Field) {
       // Skip attribute fields
       if(!$Field['Column']) {
         continue;
       }
-
+      $ColumnCount++;
       $NullDefault = ($Field['Required']) ? FALSE : TRUE;
       switch ($Field['Type']) {
         case 'Dropdown':
@@ -357,7 +357,9 @@ class DiscussionExtender extends Gdn_Plugin {
       }
     }
 
-    $Structure->Set();
+    if($ColumnCount) {
+      $Structure->Set();
+    }
   }
 
   private function RemoveFieldDataFromDB($Field) {
