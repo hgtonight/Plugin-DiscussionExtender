@@ -17,5 +17,8 @@ jQuery(document).ready(function($) {
 	}
 
   GetDiscussionPreview();
-
+  
+  $(document).on('click', '#WipeTick input', function() {
+    $('#WipeWarning').toggleClass('Hidden');
+  });
 });
