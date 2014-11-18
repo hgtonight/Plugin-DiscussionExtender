@@ -255,7 +255,7 @@ class DiscussionExtender extends Gdn_Plugin {
     $Fields = $this->GetDiscussionFields();
     $FieldString = '';
     foreach ($Fields as $Name => $Field) {
-      if ($Field['DisplayInDiscussion'] && val($Name, $Discussion, FALSE)) {
+      if ($Field['Display'] && val($Name, $Discussion, FALSE)) {
         $FieldString .= Wrap($Field['Label'], 'dt');
         $FieldString .= Wrap($Discussion->{$Name}, 'dd');
       }
