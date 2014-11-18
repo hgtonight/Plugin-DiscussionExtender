@@ -275,7 +275,7 @@ class DiscussionExtender extends Gdn_Plugin {
 
     foreach ($Fields as $Name => $Field) {
       // Skip attribute fields
-      if(!$Field['MakeColumn']) {
+      if(!$Field['Column']) {
         continue;
       }
 
