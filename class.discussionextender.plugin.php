@@ -274,12 +274,12 @@ class DiscussionExtender extends Gdn_Plugin {
       $ColumnValue = val($Name, $Discussion, FALSE);
       $Value = ($ColumnValue) ? $ColumnValue : val($Name, $FieldAttributes, FALSE);
       if ($Field['Display'] && $Value) {
-        $FieldString .= Wrap($Field['Label'], 'dt');
-        $FieldString .= Wrap($Value, 'dd');
+        $FieldString .= Wrap($Field['Label'], 'dt') . ' ';
+        $FieldString .= Wrap($Value, 'dd') . ' ';
       }
     }
 
-    echo WrapIf($FieldString, 'dl');
+    echo WrapIf($FieldString, 'dl', array('class' => 'About'));
   }
 
   /**
