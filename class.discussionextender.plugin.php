@@ -145,7 +145,7 @@ class DiscussionExtender extends Gdn_Plugin {
         $Data = C('DiscussionExtender.Fields.' . $Name, array());
         $Data = array_merge((array) $Data, (array) $FormPostValues);
         SaveToConfig('DiscussionExtender.Fields.' . $Name, $Data);
-        //$this->Structure();
+        $this->Structure();
         $Sender->RedirectUrl = Url('/settings/discussionextender');
       }
     } elseif ($Name) {
@@ -213,7 +213,11 @@ class DiscussionExtender extends Gdn_Plugin {
 
   public function PostController_BeforeFormInputs_Handler($Sender) {
     $RequestMethod = strtolower($Sender->RequestMethod);
-    if ($RequestMethod == 'discussion' || $RequestMethod == 'editdiscussion') {
+    if ($RequestMethod == 'editdiscussion') {
+      $this->AddExistingDiscussionFieldData($Sender->Form, $Sender->Data('Discussion'));
+      $this->RenderDiscussionFieldInputs($Sender->Form, 'cat');
+    }
+    else if ($RequestMethod == 'discussion') {
       $this->RenderDiscussionFieldInputs($Sender->Form, 'cat');
     }
   }
@@ -246,6 +250,17 @@ class DiscussionExtender extends Gdn_Plugin {
       }
     }
   }
+  
+  private function AddExistingDiscussionFieldData($Form, $Discussion) {
+    $Fields = DiscussionModel::GetRecordAttribute($Discussion, 'ExtendedFields');
+    $AllowedFields = $this->GetDiscussionFields();
+
+    foreach ($Fields as $Field => $Value) {
+      if(array_key_exists($Field, $AllowedFields)) {
+       $Form->SetValue($Field, $Value);
+      }
+    }
+  }
 
   /**
    * Display custom fields on Discussion
@@ -253,15 +268,59 @@ class DiscussionExtender extends Gdn_Plugin {
   public function DiscussionController_BeforeDiscussionBody_Handler($Sender) {
     $Discussion = $Sender->EventArguments['Discussion'];
     $Fields = $this->GetDiscussionFields();
+    $FieldAttributes = DiscussionModel::GetRecordAttribute($Discussion, 'ExtendedFields');
     $FieldString = '';
     foreach ($Fields as $Name => $Field) {
-      if ($Field['Display'] && val($Name, $Discussion, FALSE)) {
+      $ColumnValue = val($Name, $Discussion, FALSE);
+      $Value = ($ColumnValue) ? $ColumnValue : val($Name, $FieldAttributes, FALSE);
+      if ($Field['Display'] && $Value) {
         $FieldString .= Wrap($Field['Label'], 'dt');
-        $FieldString .= Wrap($Discussion->{$Name}, 'dd');
+        $FieldString .= Wrap($Value, 'dd');
       }
     }
 
     echo WrapIf($FieldString, 'dl');
+  }
+
+  /**
+   * Validate extended fields that are required.
+   * @param type $Sender
+   */
+  public function DiscussionModel_BeforeSaveDiscussion_Handler($Sender) {
+    $Fields = $this->GetDiscussionFields();
+    foreach ($Fields as $Name => $Field) {
+      if (GetValue('Required', $Field)) {
+         $Sender->Validation->ApplyRule($Name, 'Required', $Field['Label']." is required.");
+         // TODO Force validation on enum when not a column
+      }
+    }
+  }
+
+  public function DiscussionModel_AfterSaveDiscussion_Handler($Sender) {
+    // Confirm we have submitted form values
+    $FormPostValues = GetValue('FormPostValues', $Sender->EventArguments);
+
+    if (is_array($FormPostValues)) {
+       $DiscussionID = GetValue('DiscussionID', $FormPostValues);
+       $AllowedFields = $this->GetDiscussionFields();
+       $Columns = Gdn::SQL()->FetchColumns('Discussion');
+
+       // Filter out columns and only save current fields.
+       foreach ($FormPostValues as $Name => $Field) {
+          if (!array_key_exists($Name, $AllowedFields)) {
+             unset($FormPostValues[$Name]);
+          }
+
+          if (in_array($Name, $Columns)) {
+             unset($FormPostValues[$Name]);
+          }
+       }
+
+       // Update UserMeta if any made it thru
+       if (count($FormPostValues)) {
+          $Sender->SaveToSerializedColumn('Attributes', $DiscussionID, 'ExtendedFields', $FormPostValues);
+       }
+    }
   }
 
   /**
