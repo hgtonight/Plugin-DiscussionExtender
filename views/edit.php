@@ -35,7 +35,10 @@ echo $this->Form->Errors();
          <?php echo $this->Form->CheckBox('Required', 'Required on all discussions'); ?>
       </li>
       <li>
-         <?php echo $this->Form->CheckBox('DisplayInDiscussion', 'Show in discussion meta'); ?>
+         <?php echo $this->Form->CheckBox('Display', 'Show in discussion meta'); ?>
+      </li>
+      <li>
+         <?php echo $this->Form->CheckBox('Column', 'Add a column to the discussion table for this?'); ?>
       </li>
    </ul>
 <?php echo $this->Form->Close('Save');

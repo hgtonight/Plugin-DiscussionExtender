@@ -18,41 +18,43 @@ class DiscussionExtender extends Gdn_Plugin {
   /**
    * The available form types for extending the discussion model.
    */
-  public $FieldTypes = array(
-      'TextBox' => 'TextBox',
-      'Dropdown' => 'Dropdown',
-      'CheckBox' => 'Checkbox',
-  );
+  public $FieldTypes = array();
 
   /**
    * The available display positions on the add/edit discussion form.
    */
-  public $FieldPositions = array(
-      'cat' => 'Before Category Dropdown',
-      'body' => 'Before Discussion Body',
-      'mid' => 'After Discussion Body',
-      'last' => 'Before Buttons'
-  );
+  public $FieldPositions = array();
 
   /**
    * List of data we need to save to the config for each field.
    * @var type
    */
-  public $FieldProperties = array(
-      'Name',
-      'Type',
-      'Position',
-      'Label',
-      'Options',
-      'DisplayInDiscussion',
-      'Required',
-      'MakeColumn'
-  );
+  public $FieldProperties = array('Name', 'Type', 'Position', 'Label', 'Options', 'Display', 'Required', 'Column');
 
   /**
    * List of default discussion fields. These are off limits to prevent accidental or malicious overwrite of data.
    */
   public $ReservedNames = array('DiscussionID', 'Type', 'ForeignID', 'CategoryID', 'InsertUserID', 'UpdateUserID', 'FirstCommentID', 'LastCommentID', 'Name', 'Body', 'Format', 'Tags', 'CountComments', 'CountBookmarks', 'CountViews', 'Closed', 'Announce', 'Sink', 'DateInserted', 'DateUpdated', 'InsertIPAddress', 'UpdateIPAddress', 'DateLastComment', 'LastCommentUserID', 'Score', 'Attributes', 'RegardingID');
+
+  function __construct() {
+    parent::__construct();
+    $this->DefineConstantTranslations();
+  }
+
+  private function DefineConstantTranslations() {
+    $this->FieldTypes = array(
+        'TextBox' => T('TextBox'),
+        'Dropdown' => T('Dropdown'),
+        'CheckBox' => T('Checkbox'),
+    );
+
+    $this->FieldPositions = array(
+        'cat' => T('Before Category Dropdown'),
+        'body' => T('Before Discussion Body'),
+        'mid' => T('After Discussion Body'),
+        'last' => T('Before Buttons')
+    );
+  }
 
   /**
    * Add the Dashboard menu item.
@@ -82,6 +84,7 @@ class DiscussionExtender extends Gdn_Plugin {
    * @param type $Sender
    */
   public function Controller_Index($Sender) {
+    $Sender->SetData('Positions', $this->FieldPositions);
     $Sender->SetData('Fields', $this->GetDiscussionFields());
     $Sender->Render('settings', '', 'plugins/DiscussionExtender');
   }
@@ -271,6 +274,11 @@ class DiscussionExtender extends Gdn_Plugin {
     $Structure->Table('Discussion');
 
     foreach ($Fields as $Name => $Field) {
+      // Skip attribute fields
+      if(!$Field['MakeColumn']) {
+        continue;
+      }
+
       $NullDefault = ($Field['Required']) ? FALSE : TRUE;
       switch ($Field['Type']) {
         case 'Dropdown':
