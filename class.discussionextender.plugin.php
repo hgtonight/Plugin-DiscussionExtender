@@ -36,11 +36,17 @@ class DiscussionExtender extends Gdn_Plugin {
    */
   public $ReservedNames = array('DiscussionID', 'Type', 'ForeignID', 'CategoryID', 'InsertUserID', 'UpdateUserID', 'FirstCommentID', 'LastCommentID', 'Name', 'Body', 'Format', 'Tags', 'CountComments', 'CountBookmarks', 'CountViews', 'Closed', 'Announce', 'Sink', 'DateInserted', 'DateUpdated', 'InsertIPAddress', 'UpdateIPAddress', 'DateLastComment', 'LastCommentUserID', 'Score', 'Attributes', 'RegardingID');
 
+  /**
+   * Set up translated field types on construct
+   */
   function __construct() {
     parent::__construct();
     $this->DefineConstantTranslations();
   }
 
+  /**
+   * Use translated names for the public properties
+   */
   private function DefineConstantTranslations() {
     $this->FieldTypes = array(
         'TextBox' => T('TextBox'),
@@ -149,7 +155,8 @@ class DiscussionExtender extends Gdn_Plugin {
         $this->Structure();
         $Sender->RedirectUrl = Url('/settings/discussionextender');
       }
-    } elseif ($Name) {
+    }
+    else if ($Name) {
       // Editing
       $Data = $this->GetDiscussionField($Name);
       if ($Data) {
@@ -204,16 +211,25 @@ class DiscussionExtender extends Gdn_Plugin {
     $this->RenderDiscussionFieldInputs($Sender->Form, 'mid');
   }
 
+  /**
+   * Display custom fields on Discussion form.
+   */
   public function PostController_AfterDiscussionFormOptions_Handler($Sender) {
     $this->RenderDiscussionFieldInputs($Sender->Form, 'last');
   }
 
+  /**
+   * Display custom fields on Discussion form.
+   */
   public function Gdn_Form_BeforeBodyBox_Handler($Sender) {
     if (strtolower($Sender->EventArguments['Table']) == 'discussion') {
       $this->RenderDiscussionFieldInputs($Sender, 'body');
     }
   }
 
+  /**
+   * Display custom fields on Discussion form and populate existing data.
+   */
   public function PostController_BeforeFormInputs_Handler($Sender) {
     $RequestMethod = strtolower($Sender->RequestMethod);
     if ($RequestMethod == 'editdiscussion') {
@@ -254,6 +270,12 @@ class DiscussionExtender extends Gdn_Plugin {
     }
   }
   
+  /**
+   * Takes a form object and discussion. It populates the form with existing
+   * attributes.
+   * @param Gdn_Form $Form
+   * @param stdClass $Discussion
+   */
   private function AddExistingDiscussionFieldData($Form, $Discussion) {
     $Fields = DiscussionModel::GetRecordAttribute($Discussion, 'ExtendedFields', array());
     $AllowedFields = $this->GetDiscussionFields();
@@ -299,6 +321,10 @@ class DiscussionExtender extends Gdn_Plugin {
     }
   }
 
+  /**
+   * Save the attribute fields to the attributes column
+   * @param DiscussionModel $Sender
+   */
   public function DiscussionModel_AfterSaveDiscussion_Handler($Sender) {
     // Confirm we have submitted form values
     $FormPostValues = GetValue('FormPostValues', $Sender->EventArguments);
@@ -319,7 +345,7 @@ class DiscussionExtender extends Gdn_Plugin {
           }
        }
 
-       // Update UserMeta if any made it thru
+       // Update attributes if any made it thru
        if (count($FormPostValues)) {
           $Sender->SaveToSerializedColumn('Attributes', $DiscussionID, 'ExtendedFields', $FormPostValues);
        }
@@ -340,17 +366,20 @@ class DiscussionExtender extends Gdn_Plugin {
       if(!$Field['Column']) {
         continue;
       }
-      $ColumnCount++;
+      
       $NullDefault = ($Field['Required']) ? FALSE : TRUE;
       switch ($Field['Type']) {
         case 'Dropdown':
           $Structure->Column($Name, $Field['Options'], $NullDefault);
+          $ColumnCount++;
           break;
         case 'CheckBox':
           $Structure->Column($Name, 'tinyint(1)', '0');
+          $ColumnCount++;
           break;
         case 'TextBox':
           $Structure->Column($Name, 'varchar(255)', $NullDefault);
+          $ColumnCount++;
           break;
         default:
           break;
@@ -362,6 +391,13 @@ class DiscussionExtender extends Gdn_Plugin {
     }
   }
 
+  /**
+   * This permanently removes a field's associated information from the DB. It 
+   * completely wipes the data from the DB.
+   * 
+   * @param array $Field
+   * @return bool
+   */
   private function RemoveFieldDataFromDB($Field) {
     $Database = Gdn::Database();
     $Px = $Database->DatabasePrefix;
@@ -395,6 +431,7 @@ class DiscussionExtender extends Gdn_Plugin {
           $DiscussionModel->SetField($Discussion->DiscussionID, 'Attributes', serialize($Attributes));
         }
       }
+      return TRUE;
     }
   }
   
