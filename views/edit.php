@@ -24,7 +24,7 @@ echo $this->Form->Errors();
          echo $this->Form->TextBox('Label');
          ?>
       </li>
-      <li class="Options">
+      <li class="DE_Options">
          <?php
          echo $this->Form->Label('Options', 'Options');
          echo Wrap(T('One option per line'), 'p');
