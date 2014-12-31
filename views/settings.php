@@ -4,6 +4,7 @@ $Positions = $this->Data('Positions');
 $Fields = $this->Data('Fields');
 
 echo Wrap(T('Custom Discussion Fields'), 'h1');
+echo Wrap(T("Manage your current fields here. Don't see any? Use the button below to add a new field. There is also a live preview of the new discussion form to help you visualize the end result."), 'p', array('class' => 'Wrap'));
 echo Wrap(Anchor('Add Field', '/settings/discussionextender/edit/', 'Popup SmallButton'), 'div', array('class' => 'Wrap')); ?>
 <table>
    <thead>
