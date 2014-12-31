@@ -1,9 +1,10 @@
 <?php if (!defined('APPLICATION')) exit();
 $PluginInfo['DiscussionExtender'] = array(
     'Name' => 'Discussion Extender',
-    'Description' => 'Add arbitrary fields to discussions. Easy to customize via the admin dashboard.',
+    'Description' => 'provides an interface to add arbitrary fields to discussions via the dashboard.',
     'Version' => '1.0',
     'RequiredApplications' => array('Vanilla' => '2.1'),
+    'HasLocale' => TRUE,
     'MobileFriendly' => TRUE,
     'SettingsUrl' => '/dashboard/settings/discussionextender',
     'SettingsPermission' => 'Garden.Settings.Manage',

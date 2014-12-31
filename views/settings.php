@@ -4,8 +4,8 @@ $Positions = $this->Data('Positions');
 $Fields = $this->Data('Fields');
 
 echo Wrap(T('Custom Discussion Fields'), 'h1');
-echo Wrap(T("Manage your current fields here. Don't see any? Use the button below to add a new field. There is also a live preview of the new discussion form to help you visualize the end result."), 'p', array('class' => 'Wrap'));
-echo Wrap(Anchor('Add Field', '/settings/discussionextender/edit/', 'Popup SmallButton'), 'div', array('class' => 'Wrap')); ?>
+echo Wrap(T('DiscussionExtender.Settings.Desc'), 'p', array('class' => 'Wrap'));
+echo Wrap(Anchor(T('Add Discussion Field'), '/settings/discussionextender/edit/', 'Popup SmallButton'), 'div', array('class' => 'Wrap')); ?>
 <table>
    <thead>
       <tr>
@@ -13,7 +13,7 @@ echo Wrap(Anchor('Add Field', '/settings/discussionextender/edit/', 'Popup Small
          <th><?php echo T('Type'); ?></th>
          <th><?php echo T('Position'); ?></th>
          <th><?php echo T('Required'); ?></th>
-         <th><?php echo T('Displayed'); ?></th>
+         <th><?php echo T('In Meta'); ?></th>
          <th><?php echo T('Column'); ?></th>
          <th><?php echo T('Options'); ?></th>
       </tr>
@@ -28,7 +28,7 @@ echo Wrap(Anchor('Add Field', '/settings/discussionextender/edit/', 'Popup Small
     $String .= Wrap(($Field['Required']) ? T('Yes') : T('No'), 'td');
     $String .= Wrap(($Field['Display']) ? T('Yes') : T('No'), 'td');
     $String .= Wrap(($Field['Column']) ? T('Yes') : T('No'), 'td');
-    $String .= Wrap(Anchor('Edit', '/settings/discussionextender/edit/'.$Name, 'Popup SmallButton') . ' ' . Anchor('Delete', '/settings/discussionextender/delete/'.$Name, 'Popup SmallButton'),'td');
+    $String .= Wrap(Anchor(T('Edit'), '/settings/discussionextender/edit/'.$Name, 'Popup SmallButton') . ' ' . Anchor(T('Delete'), '/settings/discussionextender/delete/'.$Name, 'Popup SmallButton'),'td');
     echo Wrap($String, 'tr');
   }
 ?>
