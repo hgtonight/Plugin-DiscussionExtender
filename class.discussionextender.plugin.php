@@ -2,7 +2,7 @@
 $PluginInfo['DiscussionExtender'] = array(
     'Name' => 'Discussion Extender',
     'Description' => 'provides an interface to add arbitrary fields to discussions via the dashboard.',
-    'Version' => '1.0',
+    'Version' => '1.1',
     'RequiredApplications' => array('Vanilla' => '2.1'),
     'HasLocale' => TRUE,
     'MobileFriendly' => TRUE,
@@ -14,7 +14,7 @@ $PluginInfo['DiscussionExtender'] = array(
     'License' => 'GPLv2'
 );
 
-class DiscussionExtender extends Gdn_Plugin {
+class DiscussionExtenderPlugin extends Gdn_Plugin {
 
   /**
    * The available form types for extending the discussion model.
@@ -76,7 +76,7 @@ class DiscussionExtender extends Gdn_Plugin {
    */
   public function SettingsController_DiscussionExtender_Create($Sender) {
     $Sender->Permission('Garden.Settings.Manage');
-    $Sender->AddSideMenu();
+    $Sender->SetHighlightRoute();
 
     $Sender->AddJsFile($this->GetResource('js/admin.discussionextender.js', FALSE, FALSE));
     if (!C('DiscussionExtender.Fields')) {
@@ -118,7 +118,7 @@ class DiscussionExtender extends Gdn_Plugin {
       }
 
       // Make Options an array
-      if ($Options = GetValue('Options', $FormPostValues)) {
+      if ($Options = Val('Options', $FormPostValues)) {
         $Options = explode("\n", preg_replace('`[^\w\s-]`', '', $Options));
         if (count($Options) < 2) {
           $Sender->Form->AddError('Must have at least 2 options.', 'Options');
@@ -127,20 +127,20 @@ class DiscussionExtender extends Gdn_Plugin {
       }
 
       // Check label
-      if (!GetValue('Label', $FormPostValues)) {
+      if (!Val('Label', $FormPostValues)) {
         $Sender->Form->AddError('Label is required.', 'Label');
       }
 
       // Check form type
-      if (!array_key_exists(GetValue('Type', $FormPostValues), $this->FieldTypes)) {
+      if (!array_key_exists(Val('Type', $FormPostValues), $this->FieldTypes)) {
         $Sender->Form->AddError('Invalid form type.', 'Type');
       }
 
       // Merge updated data into config
       $Fields = $this->GetDiscussionFields();
-      if (!$Name || $Name != GetValue('Name', $FormPostValues)) {
+      if (!$Name || $Name != Val('Name', $FormPostValues)) {
         // Make unique name from label for new fields
-        $Name = $TestSlug = preg_replace('`[^0-9a-zA-Z]`', '', GetValue('Label', $FormPostValues));
+        $Name = $TestSlug = preg_replace('`[^0-9a-zA-Z]`', '', Val('Label', $FormPostValues));
         $i = 1;
         while (array_key_exists($Name, $Fields) || in_array($Name, $this->ReservedNames)) {
           $Name = $TestSlug . $i++;
@@ -315,7 +315,7 @@ class DiscussionExtender extends Gdn_Plugin {
   public function DiscussionModel_BeforeSaveDiscussion_Handler($Sender) {
     $Fields = $this->GetDiscussionFields();
     foreach ($Fields as $Name => $Field) {
-      if (GetValue('Required', $Field)) {
+      if (Val('Required', $Field)) {
          $Sender->Validation->ApplyRule($Name, 'Required', $Field['Label']." is required.");
          // TODO Force validation on enum when not a column
       }
@@ -328,10 +328,10 @@ class DiscussionExtender extends Gdn_Plugin {
    */
   public function DiscussionModel_AfterSaveDiscussion_Handler($Sender) {
     // Confirm we have submitted form values
-    $FormPostValues = GetValue('FormPostValues', $Sender->EventArguments);
+    $FormPostValues = Val('FormPostValues', $Sender->EventArguments);
 
     if (is_array($FormPostValues)) {
-       $DiscussionID = GetValue('DiscussionID', $FormPostValues);
+       $DiscussionID = Val('DiscussionID', $FormPostValues);
        $AllowedFields = $this->GetDiscussionFields();
        $Columns = Gdn::SQL()->FetchColumns('Discussion');
 
